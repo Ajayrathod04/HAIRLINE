@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" font-family="Inter,Arial,sans-serif" role="img" aria-label="HAIRLINE architecture: phone and browser, CloudFront, Graviton EC2 running OpenCV engine and agent, S3, DynamoDB, Cognito, Bedrock, CloudWatch">
+<defs><style>
+.b{fill:#FFFBF3;stroke:#111;stroke-width:3;rx:14}.t{font-size:17px;font-weight:700;fill:#111}.s{font-size:13px;fill:#444}
+.l{fill:#D7FF3F;stroke:#111;stroke-width:3;rx:14}.v{fill:#5B2EFF;stroke:#111;stroke-width:3;rx:14}.c{fill:#FF5A6E;stroke:#111;stroke-width:3;rx:14}.k{fill:#F2A93B;stroke:#111;stroke-width:3;rx:14}
+.a{stroke:#111;stroke-width:3;fill:none;marker-end:url(#h)}.w{font-size:17px;font-weight:700;fill:#fff}.sw{font-size:13px;fill:#eee}
+</style><marker id="h" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#111"/></marker></defs>
+<rect width="1200" height="760" fill="#F4EBDD"/>
+<text x="30" y="40" font-size="26" font-weight="900" font-style="italic">HAIRLINE architecture</text>
+<text x="30" y="62" class="s">Perception (OpenCV) decides the next action; governance (policy + audit) decides what may happen.</text>
+<rect class="l" x="30" y="100" width="200" height="110"/><text class="t" x="50" y="135">Phone / browser</text><text class="s" x="50" y="158">printed ArUco marker + photo</text><text class="s" x="50" y="178">vanilla JS UI, CSP, no inline code</text>
+<rect class="k" x="290" y="100" width="190" height="110"/><text class="t" x="310" y="135">CloudFront</text><text class="s" x="310" y="158">HTTPS front door</text><text class="s" x="310" y="178">static cached, API not cached</text>
+<rect class="b" x="540" y="90" width="630" height="400"/><text class="t" x="560" y="120">EC2 Graviton (t4g.small), Docker, gunicorn + Flask</text>
+<rect class="v" x="565" y="140" width="280" height="150"/><text class="w" x="585" y="170">OpenCV 5 engine (cvcore)</text>
+<text class="sw" x="585" y="194">ArUco detect, solvePnP-free homography</text><text class="sw" x="585" y="214">rectify to mm, tilt estimate</text><text class="sw" x="585" y="234">quality gates, blur estimate</text><text class="sw" x="585" y="254">black-hat, skeleton, distance transform</text><text class="sw" x="585" y="274">visit-to-visit comparison</text>
+<rect class="c" x="870" y="140" width="280" height="150"/><text class="t" x="890" y="170">Agent loop</text>
+<text class="s" x="890" y="194">gates -&gt; reshoot | measure</text><text class="s" x="890" y="214">measure -&gt; compare | accept | review</text><text class="s" x="890" y="234">planner: rules or Bedrock LLM</text><text class="s" x="890" y="254">guardrail: LLM cannot under-react</text><text class="s" x="890" y="274">full trace per visit</text>
+<rect class="l" x="565" y="315" width="280" height="150"/><text class="t" x="585" y="345">Case service + policy</text>
+<text class="s" x="585" y="369">default-deny, forbid beats permit</text><text class="s" x="585" y="389">authorise: engineer, not reporter</text><text class="s" x="585" y="409">close: authorisation + repair evidence</text><text class="s" x="585" y="429">dispute / resolve, duplicate merge</text><text class="s" x="585" y="449">audit log incl. denials</text>
+<rect class="b" x="870" y="315" width="280" height="150"/><text class="t" x="890" y="345">API + safety</text>
+<text class="s" x="890" y="369">CSRF header, rate limits, size caps</text><text class="s" x="890" y="389">EXIF/GPS stripped on re-encode</text><text class="s" x="890" y="409">visitor counter (hashed, no IP)</text><text class="s" x="890" y="429">JSON request logs to CloudWatch</text>
+<rect class="b" x="30" y="560" width="250" height="110"/><text class="t" x="50" y="592">S3 (private)</text><text class="s" x="50" y="614">photos, overlays, masks</text><text class="s" x="50" y="634">SSE, versioned, TLS-only</text>
+<rect class="b" x="310" y="560" width="250" height="110"/><text class="t" x="330" y="592">DynamoDB</text><text class="s" x="330" y="614">cases, visits, audit, counters</text><text class="s" x="330" y="634">PITR on, SSE on</text>
+<rect class="b" x="590" y="560" width="250" height="110"/><text class="t" x="610" y="592">Cognito</text><text class="s" x="610" y="614">groups: resident, engineer</text><text class="s" x="610" y="634">JWT verified in API (demo mode off)</text>
+<rect class="b" x="870" y="560" width="280" height="110"/><text class="t" x="890" y="592">Bedrock (optional) + CloudWatch</text><text class="s" x="890" y="614">LLM planner, rules fallback</text><text class="s" x="890" y="634">logs, traces, health</text>
+<path class="a" d="M230,155 L290,155"/><path class="a" d="M480,155 L540,155"/><path class="a" d="M705,290 L705,315"/><path class="a" d="M845,215 L870,215"/><path class="a" d="M155,490 L155,560" stroke-dasharray="6 5"/><path class="a" d="M435,490 L435,560" stroke-dasharray="6 5"/><path class="a" d="M715,490 L715,560" stroke-dasharray="6 5"/><path class="a" d="M1010,490 L1010,560" stroke-dasharray="6 5"/>
+<text x="30" y="720" class="s">Legend: green = governance, violet = OpenCV perception, coral = agent, saffron = edge. Dashed arrows = AWS service calls (S3, DynamoDB, Cognito, Bedrock/CloudWatch).</text>
+<text x="30" y="740" class="s">In the build sandbox only the app, engine, agent, policy, SQLite and local blobs were executed; the AWS service integrations are written but not run against a live account.</text>
+</svg>

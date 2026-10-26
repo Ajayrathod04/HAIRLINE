@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "default": "deny",
+  "description": "HAIRLINE authorisation. Default deny; forbid rules beat permit rules. Roles: resident, engineer. Anonymous visitors may only read.",
+  "rules": [
+    {"id": "P-READ", "effect": "permit", "roles": ["anonymous", "resident", "engineer"], "actions": ["case.read", "stats.read", "policy.read"]},
+    {"id": "P-REPORT", "effect": "permit", "roles": ["resident", "engineer"], "actions": ["case.create", "visit.add"]},
+    {"id": "P-REQUEST-REVIEW", "effect": "permit", "roles": ["resident", "engineer"], "actions": ["review.request"], "when": ["case_open"]},
+    {"id": "P-AUTHORISE", "effect": "permit", "roles": ["engineer"], "actions": ["review.authorise"], "when": ["case_open", "not_reporter"]},
+    {"id": "P-CLOSE", "effect": "permit", "roles": ["engineer"], "actions": ["case.close"], "when": ["case_open", "not_reporter"]},
+    {"id": "P-DISPUTE", "effect": "permit", "roles": ["resident"], "actions": ["dispute.open"], "when": ["case_closed"]},
+    {"id": "P-DISPUTE-RESOLVE", "effect": "permit", "roles": ["engineer"], "actions": ["dispute.resolve"], "when": ["case_disputed", "not_reporter"]},
+    {"id": "P-IMPORT", "effect": "permit", "roles": ["engineer"], "actions": ["import.csv"]},
+    {"id": "F-CLOSE-NEEDS-EVIDENCE", "effect": "forbid", "roles": ["engineer", "resident"], "actions": ["case.close"], "unless": ["has_authorisation", "repair_evidence_ok"]}
+  ]
+}

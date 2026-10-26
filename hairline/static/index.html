@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HAIRLINE: measure the crack, know when to look again</title>
+<meta name="description" content="Phone photo + printed marker = crack width in millimetres. An OpenCV-driven agent tells you when to re-shoot and when an engineer must look.">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<a class="skip" href="#app">Skip to content</a>
+<header class="top">
+  <a class="brand" href="#/try" aria-label="HAIRLINE home">
+    <svg viewBox="0 0 40 40" width="34" height="34" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="9" fill="#D7FF3F" stroke="#111" stroke-width="3"/><path d="M13 6 L18 15 L14 21 L22 27 L19 35" fill="none" stroke="#111" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>HAIRLINE</span>
+  </a>
+  <nav aria-label="Main">
+    <a href="#/try" data-nav="try">Try it</a>
+    <a href="#/cases" data-nav="cases">Cases</a>
+    <a href="#/about" data-nav="about">About</a>
+  </nav>
+  <div id="who" class="who"></div>
+</header>
+<main id="app" tabindex="-1" aria-live="polite"></main>
+<footer class="foot">
+  <div class="foot-row">
+    <div class="counter" id="counter" aria-label="Visitor count"><span class="dot"></span><b id="vc">-</b> visitors <span class="sep">/</span> <b id="pv">-</b> page views</div>
+    <div class="mono" id="build">loading build info</div>
+  </div>
+  <p class="fine">Triage tool, not a structural certificate. Demo cases are simulated; measurements are estimates shown with uncertainty. <a href="#/about">What is simulated and what is estimated</a>.</p>
+</footer>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<dialog id="login" aria-labelledby="login-title">
+  <form method="dialog" id="login-form">
+    <h2 id="login-title">Demo sign-in</h2>
+    <p class="fine">Demo auth is a role picker, not real identity. Production uses Amazon Cognito groups.</p>
+    <label>Role
+      <select id="login-role"><option value="resident">Resident (reports and photographs)</option><option value="engineer">Engineer (authorises and closes)</option></select>
+    </label>
+    <label>Name <input id="login-name" maxlength="40" placeholder="e.g. Asha"></label>
+    <div class="row"><button class="btn" value="cancel" formnovalidate>Cancel</button><button class="btn primary" id="login-go" value="ok">Sign in</button></div>
+  </form>
+</dialog>
+<script src="/static/app.js"></script>
+</body>
+</html>

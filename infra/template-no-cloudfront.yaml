@@ -1,0 +1,197 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  HAIRLINE on AWS: one Graviton EC2 instance running the OpenCV engine + API in Docker, fronted by CloudFront (HTTPS),
+  private S3 for photos, DynamoDB for cases, Cognito for sign-in, CloudWatch Logs for traces.
+  NOT deployed or linted in the build sandbox (no AWS access): run `aws cloudformation validate-template` first. See docs/DEPLOY_AWS.md.
+
+Parameters:
+  RepoUrl:
+    Type: String
+    Description: Git URL that contains this project (public or reachable from the instance)
+  RepoRef:
+    Type: String
+    Default: main
+    Description: Branch or tag to deploy (use the release tag, for example v1.0-submission)
+  InstanceType:
+    Type: String
+    Default: t4g.small
+    Description: Graviton (arm64). Use t3.small and the x86 AMI parameter if OpenCV 5 has no arm64 wheel.
+  AmiSsmParameter:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64
+  SecretKey:
+    Type: String
+    NoEcho: true
+    MinLength: 24
+    Description: Long random string used to sign demo sessions and hash visitor ids
+  AuthMode:
+    Type: String
+    Default: cognito
+    AllowedValues: [demo, cognito]
+  SeedDemo:
+    Type: String
+    Default: "1"
+    AllowedValues: ["0", "1"]
+  BedrockModelId:
+    Type: String
+    Default: ""
+    Description: Optional. When set, the LLM planner is enabled (rules guardrail still applies). Copy the id from your Bedrock console.
+  CloudFrontPrefixListId:
+    Type: String
+    Default: ""
+    Description: >
+      Optional but recommended. Managed prefix list com.amazonaws.global.cloudfront.origin-facing for your region
+      (aws ec2 describe-managed-prefix-lists). Empty = port 80 open to the internet.
+
+Conditions:
+  HasPrefixList: !Not [!Equals [!Ref CloudFrontPrefixListId, ""]]
+  HasBedrock: !Not [!Equals [!Ref BedrockModelId, ""]]
+  UseCognito: !Equals [!Ref AuthMode, cognito]
+
+Resources:
+  PhotoBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      PublicAccessBlockConfiguration: {BlockPublicAcls: true, BlockPublicPolicy: true, IgnorePublicAcls: true, RestrictPublicBuckets: true}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration: [{ServerSideEncryptionByDefault: {SSEAlgorithm: AES256}}]
+      VersioningConfiguration: {Status: Enabled}
+      OwnershipControls: {Rules: [{ObjectOwnership: BucketOwnerEnforced}]}
+
+  PhotoBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref PhotoBucket
+      PolicyDocument:
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource: [!GetAtt PhotoBucket.Arn, !Sub "${PhotoBucket.Arn}/*"]
+            Condition: {Bool: {"aws:SecureTransport": "false"}}
+
+  CasesTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions: [{AttributeName: k, AttributeType: S}, {AttributeName: i, AttributeType: S}]
+      KeySchema: [{AttributeName: k, KeyType: HASH}, {AttributeName: i, KeyType: RANGE}]
+      PointInTimeRecoverySpecification: {PointInTimeRecoveryEnabled: true}
+      SSESpecification: {SSEEnabled: true}
+
+  AppLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties: {RetentionInDays: 30}
+
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Condition: UseCognito
+    Properties:
+      UserPoolName: hairline-users
+      AutoVerifiedAttributes: [email]
+      UsernameAttributes: [email]
+      Policies: {PasswordPolicy: {MinimumLength: 10, RequireLowercase: true, RequireNumbers: true, RequireUppercase: false, RequireSymbols: false}}
+  ResidentGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Condition: UseCognito
+    Properties:
+      GroupName: resident
+      UserPoolId: !Ref UserPool
+      Description: "Reports and photographs"
+  EngineerGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Condition: UseCognito
+    Properties:
+      GroupName: engineer
+      UserPoolId: !Ref UserPool
+      Description: "Authorises, closes, resolves disputes"
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Condition: UseCognito
+    Properties:
+      UserPoolId: !Ref UserPool
+      GenerateSecret: false
+      ExplicitAuthFlows: [ALLOW_USER_SRP_AUTH, ALLOW_REFRESH_TOKEN_AUTH]
+
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement: [{Effect: Allow, Principal: {Service: ec2.amazonaws.com}, Action: "sts:AssumeRole"}]
+      ManagedPolicyArns: ["arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"]
+      Policies:
+        - PolicyName: hairline-app
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action: ["s3:PutObject", "s3:GetObject"]
+                Resource: !Sub "${PhotoBucket.Arn}/*"
+              - Effect: Allow
+                Action: ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:Query", "dynamodb:UpdateItem"]
+                Resource: !GetAtt CasesTable.Arn
+              - Effect: Allow
+                Action: ["logs:CreateLogStream", "logs:PutLogEvents"]
+                Resource: !GetAtt AppLogGroup.Arn
+              - !If
+                - HasBedrock
+                - {Effect: Allow, Action: ["bedrock:InvokeModel"], Resource: "*"}
+                - !Ref AWS::NoValue
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties: {Roles: [!Ref InstanceRole]}
+
+  AppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "HAIRLINE origin. HTTP from CloudFront only when a prefix list is given. No SSH, use SSM Session Manager."
+      SecurityGroupIngress:
+        - !If
+          - HasPrefixList
+          - {IpProtocol: tcp, FromPort: 80, ToPort: 80, SourcePrefixListId: !Ref CloudFrontPrefixListId}
+          - {IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 0.0.0.0/0}
+
+  AppInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AmiSsmParameter
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref InstanceProfile
+      SecurityGroupIds: [!GetAtt AppSecurityGroup.GroupId]
+      BlockDeviceMappings: [{DeviceName: /dev/xvda, Ebs: {VolumeSize: 20, VolumeType: gp3, Encrypted: true}}]
+      MetadataOptions: {HttpTokens: required}
+      Tags: [{Key: Name, Value: hairline}]
+      UserData:
+        Fn::Base64: !Sub
+          - |
+            #!/bin/bash
+            set -euxo pipefail
+            dnf install -y docker git
+            systemctl enable --now docker
+            git clone --depth 1 --branch ${RepoRef} ${RepoUrl} /opt/hairline
+            cd /opt/hairline
+            docker build -t hairline .
+            docker run --rm hairline python scripts/verify_opencv5.py > /var/log/verify_opencv5.log 2>&1 || true
+            docker run -d --restart always --name hairline -p 80:8080 \
+              --log-driver=awslogs --log-opt awslogs-region=${AWS::Region} --log-opt awslogs-group=${AppLogGroup} --log-opt awslogs-create-group=false \
+              -e AWS_REGION=${AWS::Region} -e HL_STORE=dynamodb -e HL_DYNAMO_TABLE=${CasesTable} \
+              -e HL_BLOB_BACKEND=s3 -e HL_S3_BUCKET=${PhotoBucket} \
+              -e HL_AUTH_MODE=${AuthMode} -e HL_SECRET_KEY='${SecretKey}' -e HL_SEED_DEMO=${SeedDemo} \
+              -e HL_PLANNER=${Planner} -e HL_BEDROCK_MODEL_ID='${BedrockModelId}' \
+              -e HL_COGNITO_REGION=${AWS::Region} -e HL_COGNITO_POOL_ID=${PoolId} -e HL_COGNITO_CLIENT_ID=${ClientId} \
+              hairline
+          - Planner: !If [HasBedrock, bedrock, rules]
+            PoolId: !If [UseCognito, !Ref UserPool, ""]
+            ClientId: !If [UseCognito, !Ref UserPoolClient, ""]
+
+Outputs:
+  SiteUrl: {Description: Temporary public HTTP demo URL, Value: !Sub "http://${AppInstance.PublicDnsName}"}
+  PhotoBucketName: {Value: !Ref PhotoBucket}
+  CasesTableName: {Value: !Ref CasesTable}
+  LogGroupName: {Value: !Ref AppLogGroup}
+  UserPoolId: {Condition: UseCognito, Value: !Ref UserPool}
+  UserPoolClientId: {Condition: UseCognito, Value: !Ref UserPoolClient}

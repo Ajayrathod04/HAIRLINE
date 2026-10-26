@@ -1,0 +1,7 @@
+# Exact versions this build's test-suite and benchmark were run against (development sandbox).
+# NOTE: OpenCV in the sandbox was 4.13.0, NOT 5.x. The code only uses long-stable APIs; run
+# `python scripts/verify_opencv5.py && python -m unittest discover -s tests` on OpenCV 5 before submitting.
+opencv-python==4.13.0   # cv2 4.13.0
+numpy==2.4.4
+scikit-image==0.26.0
+Flask==3.1.3

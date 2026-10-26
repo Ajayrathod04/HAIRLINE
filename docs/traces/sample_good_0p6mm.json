@@ -1,0 +1,59 @@
+{
+ "sample": "sample_good_0p6mm",
+ "status": "MEASURED",
+ "severity": "watch",
+ "guidance": "Measured about 0.57 +/- 0.13 mm over 117 mm. Severity: watch. Keep monitoring with the same marker.",
+ "planner": "rules",
+ "measurement": {
+  "found": true,
+  "width_raw_med_mm": 0.5,
+  "blur_sigma_mm": 0.0,
+  "n_cracks": 1,
+  "length_mm": 117.167,
+  "width_med_mm": 0.5,
+  "width_p90_mm": 0.566,
+  "width_max_mm": 0.566,
+  "area_mm2": 81.694,
+  "uncertainty_mm": 0.126
+ },
+ "trace": [
+  {
+   "step": 1,
+   "tool": "detect_marker+quality_gates",
+   "observation": {
+    "marker_found": true,
+    "failed": [],
+    "src_ppm": 5.975,
+    "tilt_deg": 6.468,
+    "sharpness": 0.461,
+    "blur_sigma_mm": 0.0,
+    "glare": 0.0,
+    "coverage": 1.0,
+    "mean": 170.609,
+    "contrast": 25.0,
+    "uncertainty_mm": 0.126
+   },
+   "planner": "rules",
+   "action": "measure",
+   "reason": "all blocking gates passed",
+   "note": "",
+   "t_ms": 123
+  },
+  {
+   "step": 2,
+   "tool": "segment_and_measure",
+   "observation": {
+    "found": true,
+    "severity": "watch",
+    "width_p90_mm": 0.566,
+    "length_mm": 117.2,
+    "uncertainty_mm": 0.126
+   },
+   "planner": "rules",
+   "action": "accept",
+   "reason": "severity watch; no escalation criteria met",
+   "note": "",
+   "t_ms": 326
+  }
+ ]
+}

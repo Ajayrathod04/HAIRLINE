@@ -1,0 +1,7 @@
+# Core runtime. OpenCV 5 is REQUIRED by the competition: run scripts/verify_opencv5.py on the deployment machine,
+# then scripts/freeze_deps.sh to write requirements.lock.txt (exact pins) and commit it before tagging the release.
+opencv-python-headless>=5.0,<6
+numpy>=2.0,<3
+scikit-image>=0.24
+Flask>=3.0,<4
+gunicorn>=22

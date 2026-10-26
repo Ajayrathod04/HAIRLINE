@@ -1,0 +1,59 @@
+{
+ "sample": "sample_wide_2p0mm",
+ "status": "REVIEW_REQUESTED",
+ "severity": "priority",
+ "guidance": "Measured about 1.96 +/- 0.13 mm. I drafted a review request for an engineer (severity priority (p90 width 1.97 mm)). Nothing was sent to anyone automatically.",
+ "planner": "rules",
+ "measurement": {
+  "found": true,
+  "width_raw_med_mm": 1.899,
+  "blur_sigma_mm": 0.0,
+  "n_cracks": 1,
+  "length_mm": 116.667,
+  "width_med_mm": 1.899,
+  "width_p90_mm": 1.965,
+  "width_max_mm": 1.966,
+  "area_mm2": 266.583,
+  "uncertainty_mm": 0.126
+ },
+ "trace": [
+  {
+   "step": 1,
+   "tool": "detect_marker+quality_gates",
+   "observation": {
+    "marker_found": true,
+    "failed": [],
+    "src_ppm": 5.961,
+    "tilt_deg": 8.851,
+    "sharpness": 0.459,
+    "blur_sigma_mm": 0.0,
+    "glare": 0.0,
+    "coverage": 1.0,
+    "mean": 174.039,
+    "contrast": 36.0,
+    "uncertainty_mm": 0.126
+   },
+   "planner": "rules",
+   "action": "measure",
+   "reason": "all blocking gates passed",
+   "note": "",
+   "t_ms": 85
+  },
+  {
+   "step": 2,
+   "tool": "segment_and_measure",
+   "observation": {
+    "found": true,
+    "severity": "priority",
+    "width_p90_mm": 1.965,
+    "length_mm": 116.7,
+    "uncertainty_mm": 0.126
+   },
+   "planner": "rules",
+   "action": "request_review",
+   "reason": "severity priority (p90 width 1.97 mm)",
+   "note": "",
+   "t_ms": 236
+  }
+ ]
+}

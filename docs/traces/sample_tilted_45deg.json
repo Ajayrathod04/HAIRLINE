@@ -1,0 +1,34 @@
+{
+ "sample": "sample_tilted_45deg",
+ "status": "NEEDS_RESHOOT",
+ "severity": "unknown",
+ "guidance": "Camera is tilted about 45 degrees. Hold the phone parallel to the wall (aim for under 18).",
+ "planner": "rules",
+ "measurement": null,
+ "trace": [
+  {
+   "step": 1,
+   "tool": "detect_marker+quality_gates",
+   "observation": {
+    "marker_found": true,
+    "failed": [
+     "tilt_deg"
+    ],
+    "src_ppm": 5.136,
+    "tilt_deg": 44.872,
+    "sharpness": 0.485,
+    "blur_sigma_mm": 0.0,
+    "glare": 0.0,
+    "coverage": 1.0,
+    "mean": 169.993,
+    "contrast": 35.0,
+    "uncertainty_mm": 0.146
+   },
+   "planner": "rules",
+   "action": "reshoot",
+   "reason": "blocking quality gate failed: tilt_deg",
+   "note": "",
+   "t_ms": 102
+  }
+ ]
+}

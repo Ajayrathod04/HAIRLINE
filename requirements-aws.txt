@@ -1,0 +1,3 @@
+-r requirements.txt
+boto3>=1.34          # DynamoDB, S3, Bedrock (optional paths)
+PyJWT[crypto]>=2.8   # Cognito JWT verification (HL_AUTH_MODE=cognito)

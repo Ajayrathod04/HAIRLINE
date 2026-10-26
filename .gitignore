@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+data/
+.env
+.venv/
+eval/real_card_results.json
+.ui_fixtures/
+.sam_config/
+.appdata/
